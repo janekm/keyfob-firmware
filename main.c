@@ -55,18 +55,19 @@
 #include "pstorage.h"
 
 
-#define LEFT_BUTTON_PIN_NO              BUTTON_0                                    /**< Button used for moving the mouse pointer to the left. */
-#define RIGHT_BUTTON_PIN_NO             BUTTON_1                                    /**< Button used for moving the mouse pointer to the right. */
-#define UP_BUTTON_PIN_NO                BUTTON_2                                    /**< Button used for moving the mouse pointer upwards. */
-#define DOWN_BUTTON_PIN_NO              BUTTON_3                                    /**< Button used for moving the mouse pointer downwards. */
-#define BONDMNGR_DELETE_BUTTON_PIN_NO   RIGHT_BUTTON_PIN_NO                         /**< Button used for deleting all bonded centrals during startup. */
+#define LEFT_BUTTON_PIN_NO              9                                        /**< Button used for moving the mouse pointer to the left. */
+#define RIGHT_BUTTON_PIN_NO             1                                        /**< Button used for moving the mouse pointer to the right. */
+#define UP_BUTTON_PIN_NO                14                                       /**< Button used for moving the mouse pointer upwards. */
+#define DOWN_BUTTON_PIN_NO              5                                        /**< Button used for moving the mouse pointer downwards. */
+#define CLICK_BUTTON_PIN_NO             6                                        /**< Button used for left click. */
+#define BONDMNGR_DELETE_BUTTON_PIN_NO   31                                       /**< Button used for deleting all bonded centrals during startup. */
 
-#define ADVERTISING_LED_PIN_NO          LED_0                                       /**< Is on when device is advertising. */
-#define CONNECTED_LED_PIN_NO            LED_1                                       /**< Is on when device has connected. */
-#define ADV_DIRECTED_LED_PIN_NO         LED_4                                       /**< Is on when we are doing directed advertisement. */
-#define ADV_WHITELIST_LED_PIN_NO        LED_5                                       /**< Is on when we are doing advertising with whitelist. */
-#define ADV_INTERVAL_SLOW_LED_PIN_NO    LED_6                                       /**< Is on when we are doing slow advertising. */
-#define ASSERT_LED_PIN_NO               LED_7                                       /**< Is on when application has asserted. */
+#define ADVERTISING_LED_PIN_NO          31                                       /**< Is on when device is advertising. */
+#define CONNECTED_LED_PIN_NO            31                                       /**< Is on when device has connected. */
+#define ADV_DIRECTED_LED_PIN_NO         31                                       /**< Is on when we are doing directed advertisement. */
+#define ADV_WHITELIST_LED_PIN_NO        31                                       /**< Is on when we are doing advertising with whitelist. */
+#define ADV_INTERVAL_SLOW_LED_PIN_NO    31                                       /**< Is on when we are doing slow advertising. */
+#define ASSERT_LED_PIN_NO               31                                       /**< Is on when application has asserted. */
 
 #define DEVICE_NAME                     "Nordic_Mouse"                              /**< Name of device. Will be included in the advertising data. */
 #define MANUFACTURER_NAME               "NordicSemiconductor"                       /**< Manufacturer. Will be passed to Device Information Service. */
@@ -113,7 +114,7 @@
 #define SEC_PARAM_MIN_KEY_SIZE          7                                           /**< Minimum encryption key size. */
 #define SEC_PARAM_MAX_KEY_SIZE          16                                          /**< Maximum encryption key size. */
 
-#define MOVEMENT_SPEED                  5                                           /**< Number of pixels by which the cursor is moved each time a button is pushed. */
+#define MOVEMENT_SPEED                  25                                          /**< Number of pixels by which the cursor is moved each time a button is pushed. */
 #define INPUT_REPORT_COUNT              3                                           /**< Number of input reports in this application. */
 #define INPUT_REP_BUTTONS_LEN           3                                           /**< Length of Mouse Input Report containing button data. */
 #define INPUT_REP_MOVEMENT_LEN          3                                           /**< Length of Mouse Input Report containing movement data. */
@@ -975,7 +976,7 @@ static void ble_stack_init(void)
     uint32_t err_code;
 
     // Initialize the SoftDevice handler module.
-    SOFTDEVICE_HANDLER_INIT(NRF_CLOCK_LFCLKSRC_XTAL_20_PPM, true);
+    SOFTDEVICE_HANDLER_INIT(NRF_CLOCK_LFCLKSRC_RC_250_PPM_8000MS_CALIBRATION, true);
 
     // Register with the SoftDevice handler module for BLE events.
     err_code = softdevice_ble_evt_handler_set(ble_evt_dispatch);
@@ -1073,9 +1074,25 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
                 mouse_movement_send(0, MOVEMENT_SPEED);
                 break;
 
+            case CLICK_BUTTON_PIN_NO:
+                break;
+
             default:
                 APP_ERROR_HANDLER(pin_no);
                 break;
+        }
+    }
+
+    if (pin_no == CLICK_BUTTON_PIN_NO) {
+        if (m_in_boot_mode) {
+            ble_hids_boot_mouse_inp_rep_send(&m_hids, (button_action == APP_BUTTON_PUSH), 0, 0, 0, NULL);
+        } else {
+            uint8_t buffer[INPUT_REP_BUTTONS_LEN];
+            buffer[0] = (button_action == APP_BUTTON_PUSH);
+            ble_hids_inp_rep_send(&m_hids,
+                                     INPUT_REP_BUTTONS_INDEX,
+                                     INPUT_REP_BUTTONS_LEN,
+                                     buffer);
         }
     }
 }
@@ -1098,7 +1115,8 @@ static void buttons_init(void)
         {LEFT_BUTTON_PIN_NO,  false, BUTTON_PULL, button_event_handler},
         {RIGHT_BUTTON_PIN_NO, false, BUTTON_PULL, button_event_handler},   // Note: This pin is also BONDMNGR_DELETE_BUTTON_PIN_NO
         {UP_BUTTON_PIN_NO,    false, BUTTON_PULL, button_event_handler},
-        {DOWN_BUTTON_PIN_NO,  false, BUTTON_PULL, button_event_handler}
+        {DOWN_BUTTON_PIN_NO,  false, BUTTON_PULL, button_event_handler},
+        {CLICK_BUTTON_PIN_NO, false, BUTTON_PULL, button_event_handler}
     };
 
     APP_BUTTON_INIT(buttons, sizeof(buttons) / sizeof(buttons[0]), BUTTON_DETECTION_DELAY, true);
