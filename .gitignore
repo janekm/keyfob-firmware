@@ -1,0 +1,4 @@
+pure-gcc/_build/
+
+*.jlink
+*.log
