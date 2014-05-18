@@ -59,7 +59,7 @@
 #define RIGHT_BUTTON_PIN_NO             1                                        /**< Button used for moving the mouse pointer to the right. */
 #define UP_BUTTON_PIN_NO                14                                       /**< Button used for moving the mouse pointer upwards. */
 #define DOWN_BUTTON_PIN_NO              5                                        /**< Button used for moving the mouse pointer downwards. */
-#define CLICK_BUTTON_PIN_NO             6                                        /**< Button used for left click. */
+#define MIDDLE_BUTTON_PIN_NO            6                                        /**< Button used for left click. */
 #define BONDMNGR_DELETE_BUTTON_PIN_NO   31                                       /**< Button used for deleting all bonded centrals during startup. */
 
 #define ADVERTISING_LED_PIN_NO          31                                       /**< Is on when device is advertising. */
@@ -125,6 +125,12 @@
 #define INPUT_REP_REF_BUTTONS_ID        1                                           /**< Id of reference to Mouse Input Report containing button data. */
 #define INPUT_REP_REF_MOVEMENT_ID       2                                           /**< Id of reference to Mouse Input Report containing movement data. */
 #define INPUT_REP_REF_MPLAYER_ID        3                                           /**< Id of reference to Mouse Input Report containing media player data. */
+
+#define MPLAYER_PLAYPAUSE               0
+#define MPLAYER_NEXT                    2
+#define MPLAYER_PREV                    3
+#define MPLAYER_VOLDOWN                 4
+#define MPLAYER_VOLUP                   5
 
 #define BASE_USB_HID_SPEC_VERSION       0x0101                                      /**< Version number of base USB HID Specification implemented by this application. */
 
@@ -1047,53 +1053,55 @@ static void mouse_movement_send(int16_t x_delta, int16_t y_delta)
     }
 }
 
-
+uint8_t mplayer_buffer = 0;
 /**@brief Function for handling button events.
  *
  * @param[in]   pin_no   The pin number of the button pressed.
  */
 static void button_event_handler(uint8_t pin_no, uint8_t button_action)
 {
-    if (button_action == APP_BUTTON_PUSH)
+#define HANDLE_BUTTON(btn) \
+do { \
+    if (press) mplayer_buffer |= 1 << btn; \
+    else mplayer_buffer &= ~(1 << btn); \
+} while (0);
+
+    bool press = (button_action == APP_BUTTON_PUSH);
+    switch (pin_no)
     {
-        switch (pin_no)
-        {
-            case LEFT_BUTTON_PIN_NO:
-                mouse_movement_send(-MOVEMENT_SPEED, 0);
-                break;
+        case LEFT_BUTTON_PIN_NO:
+            HANDLE_BUTTON(MPLAYER_PREV);
+            break;
 
-            case RIGHT_BUTTON_PIN_NO:
-                mouse_movement_send(MOVEMENT_SPEED, 0);
-                break;
+        case RIGHT_BUTTON_PIN_NO:
+            HANDLE_BUTTON(MPLAYER_NEXT);
+            break;
 
-            case UP_BUTTON_PIN_NO:
-                mouse_movement_send(0, -MOVEMENT_SPEED);
-                break;
+        case UP_BUTTON_PIN_NO:
+            HANDLE_BUTTON(MPLAYER_VOLUP);
+            break;
 
-            case DOWN_BUTTON_PIN_NO:
-                mouse_movement_send(0, MOVEMENT_SPEED);
-                break;
+        case DOWN_BUTTON_PIN_NO:
+            HANDLE_BUTTON(MPLAYER_VOLDOWN);
+            break;
 
-            case CLICK_BUTTON_PIN_NO:
-                break;
+        case MIDDLE_BUTTON_PIN_NO:
+            HANDLE_BUTTON(MPLAYER_PLAYPAUSE);
+            break;
 
-            default:
-                APP_ERROR_HANDLER(pin_no);
-                break;
-        }
+        default:
+            APP_ERROR_HANDLER(pin_no);
+            break;
     }
+#undef HANDLE_BUTTON
 
-    if (pin_no == CLICK_BUTTON_PIN_NO) {
-        if (m_in_boot_mode) {
-            ble_hids_boot_mouse_inp_rep_send(&m_hids, (button_action == APP_BUTTON_PUSH), 0, 0, 0, NULL);
-        } else {
-            uint8_t buffer[INPUT_REP_BUTTONS_LEN];
-            buffer[0] = (button_action == APP_BUTTON_PUSH);
-            ble_hids_inp_rep_send(&m_hids,
-                                     INPUT_REP_BUTTONS_INDEX,
-                                     INPUT_REP_BUTTONS_LEN,
-                                     buffer);
-        }
+    if (m_in_boot_mode) {
+        ble_hids_boot_mouse_inp_rep_send(&m_hids, mplayer_buffer, 0, 0, 0, NULL);
+    } else {
+        ble_hids_inp_rep_send(&m_hids,
+                                 INPUT_REP_MPLAYER_INDEX,
+                                 INPUT_REP_MEDIA_PLAYER_LEN,
+                                 &mplayer_buffer);
     }
 }
 
@@ -1116,7 +1124,7 @@ static void buttons_init(void)
         {RIGHT_BUTTON_PIN_NO, false, BUTTON_PULL, button_event_handler},   // Note: This pin is also BONDMNGR_DELETE_BUTTON_PIN_NO
         {UP_BUTTON_PIN_NO,    false, BUTTON_PULL, button_event_handler},
         {DOWN_BUTTON_PIN_NO,  false, BUTTON_PULL, button_event_handler},
-        {CLICK_BUTTON_PIN_NO, false, BUTTON_PULL, button_event_handler}
+        {MIDDLE_BUTTON_PIN_NO, false, BUTTON_PULL, button_event_handler}
     };
 
     APP_BUTTON_INIT(buttons, sizeof(buttons) / sizeof(buttons[0]), BUTTON_DETECTION_DELAY, true);
