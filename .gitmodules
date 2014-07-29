@@ -1,3 +1,6 @@
 [submodule "nrf51-pure-gcc-setup"]
 	path = nrf51-pure-gcc-setup
 	url = https://github.com/hlnd/nrf51-pure-gcc-setup.git
+[submodule "nrf51822"]
+	path = nrf51822
+	url = https://janekm@bitbucket.org/janekm/nrf51_sdk.git

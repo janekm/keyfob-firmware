@@ -30,6 +30,7 @@ SDK_INCLUDE_PATHS += .
 SDK_PATH = ../nrf51822/
 TEMPLATE_PATH = ../nrf51-pure-gcc-setup/template/
 
+
 CFLAGS = -O0 -g
 
 GDB_PORT_NUMBER = 2331

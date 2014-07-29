@@ -118,7 +118,7 @@
 #define INPUT_REPORT_COUNT              1                                           /**< Number of input reports in this application. */
 #define INPUT_REP_MEDIA_PLAYER_LEN      1                                           /**< Length of Mouse Input Report containing media player data. */
 #define INPUT_REP_MPLAYER_INDEX         0                                           /**< Index of Mouse Input Report containing media player data. */
-#define INPUT_REP_REF_MPLAYER_ID        1                                           /**< Id of reference to Mouse Input Report containing media player data. */
+#define INPUT_REP_REF_MPLAYER_ID        0                                           /**< Id of reference to Mouse Input Report containing media player data. */
 
 #define MPLAYER_PLAYPAUSE               0
 #define MPLAYER_NEXT                    2
@@ -155,7 +155,7 @@ static ble_sensorsim_state_t            m_battery_sim_state;                    
 static app_timer_id_t                   m_battery_timer_id;                         /**< Battery timer. */
 
 static ble_advertising_mode_t           m_advertising_mode;                         /**< Variable to keep track of when we are advertising. */
-static int8_t                           m_last_connected_central;                   /**< BondManager reference handle to the last connected central. */ 
+static int8_t                           m_last_connected_central;                   /**< BondManager reference handle to the last connected central. */
 static uint8_t                          m_direct_adv_cnt;                           /**< Counter of direct advertisements. */
 
 
@@ -419,7 +419,7 @@ static void hids_init(void)
         0x05, 0x0C,                     // Usage Page (Consumer)
         0x09, 0x01,                     // Usage (Consumer Control)
         0xA1, 0x01,                     // Collection (Application)
-        0x85, 0x01,                     //     Report Id (1)
+        //0x85, 0x01,                     //     Report Id (1)
         0x15, 0x00,                     //     Logical minimum (0)
         0x25, 0x01,                     //     Logical maximum (1)
         0x75, 0x01,                     //     Report Size (1)
@@ -725,7 +725,7 @@ static void on_hids_evt(ble_hids_t * p_hids, ble_hids_evt_t *p_evt)
                     else
                     {
                         // The bondmanager did not write the system attributes to the flash because
-                        // the connected central is not a new central. The system attributes 
+                        // the connected central is not a new central. The system attributes
                         // will only be written to flash only when disconnected from this central.
                         // Do nothing now.
                     }
@@ -736,7 +736,7 @@ static void on_hids_evt(ble_hids_t * p_hids, ble_hids_evt_t *p_evt)
                 }
             }
             else if (
-                     (p_evt->params.notification.char_id.rep_index == INPUT_REP_MOVEMENT_INDEX)
+                     (p_evt->params.notification.char_id.rep_index == INPUT_REP_MPLAYER_INDEX)
                      &&
                      (p_evt->params.notification.char_id.rep_type == BLE_HIDS_REP_TYPE_INPUT)
                     )
@@ -755,7 +755,7 @@ static void on_hids_evt(ble_hids_t * p_hids, ble_hids_evt_t *p_evt)
                 else
                 {
                     // The bondmanager did not write the system attributes to the flash because
-                    // the connected central is not a new central. The system attributes 
+                    // the connected central is not a new central. The system attributes
                     // will only be written to flash only when disconnected from this central.
                     // Do nothing now.
                 }
@@ -839,11 +839,11 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
                     nrf_gpio_cfg_sense_input(LEFT_BUTTON_PIN_NO,
                                              BUTTON_PULL,
                                              NRF_GPIO_PIN_SENSE_LOW);
-                    
+
                     nrf_gpio_cfg_sense_input(BONDMNGR_DELETE_BUTTON_PIN_NO,
                                              BUTTON_PULL,
                                              NRF_GPIO_PIN_SENSE_LOW);
-                    
+
                     // Go to system-off mode.
                     // (this function will not return; wakeup will cause a reset).
                     err_code = sd_power_system_off();
@@ -915,7 +915,7 @@ static void ble_stack_init(void)
     // Register with the SoftDevice handler module for BLE events.
     err_code = softdevice_ble_evt_handler_set(ble_evt_dispatch);
     APP_ERROR_CHECK(err_code);
-    
+
     // Register with the SoftDevice handler module for BLE events.
     err_code = softdevice_sys_evt_handler_set(sys_evt_dispatch);
     APP_ERROR_CHECK(err_code);
@@ -931,55 +931,6 @@ static void scheduler_init(void)
 }
 
 
-/**@brief Function for sending a Mouse Movement.
- *
- * @param[in]   x_delta   Horizontal movement.
- * @param[in]   y_delta   Vertical movement.
- */
-static void mouse_movement_send(int16_t x_delta, int16_t y_delta)
-{
-    uint32_t err_code;
-
-    if (m_in_boot_mode)
-    {
-        x_delta = MIN(x_delta, 0x00ff);
-        y_delta = MIN(y_delta, 0x00ff);
-
-        err_code = ble_hids_boot_mouse_inp_rep_send(&m_hids,
-                                                    0x00,
-                                                    (int8_t)x_delta,
-                                                    (int8_t)y_delta,
-                                                    0,
-                                                    NULL);
-    }
-    else
-    {
-        uint8_t buffer[INPUT_REP_MOVEMENT_LEN];
-
-        APP_ERROR_CHECK_BOOL(INPUT_REP_MOVEMENT_LEN == 3);
-
-        x_delta = MIN(x_delta, 0x0fff);
-        y_delta = MIN(y_delta, 0x0fff);
-
-        buffer[0] = x_delta & 0x00ff;
-        buffer[1] = ((y_delta & 0x000f) << 4) | ((x_delta & 0x0f00) >> 8);
-        buffer[2] = (y_delta & 0x0ff0) >> 4;
-
-        err_code = ble_hids_inp_rep_send(&m_hids,
-                                         INPUT_REP_MOVEMENT_INDEX,
-                                         INPUT_REP_MOVEMENT_LEN,
-                                         buffer);
-    }
-
-    if ((err_code != NRF_SUCCESS) &&
-        (err_code != NRF_ERROR_INVALID_STATE) &&
-        (err_code != BLE_ERROR_NO_TX_BUFFERS) &&
-        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-    )
-    {
-        APP_ERROR_HANDLER(err_code);
-    }
-}
 
 uint8_t mplayer_buffer = 0;
 /**@brief Function for handling button events.
@@ -1090,7 +1041,7 @@ static void bond_manager_init(void)
     // Initialize persistent storage module.
     err_code = pstorage_init();
     APP_ERROR_CHECK(err_code);
-    
+
     // Clear all bonded centrals if the Bonds Delete button is pushed.
     err_code = app_button_is_pushed(BONDMNGR_DELETE_BUTTON_PIN_NO, &bonds_delete);
     APP_ERROR_CHECK(err_code);
