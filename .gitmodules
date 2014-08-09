@@ -4,3 +4,6 @@
 [submodule "ble_app_hrs_c_S120_gcc"]
 	path = ble_app_hrs_c_S120_gcc
 	url = git@github.com:janekm/ble_app_hrs_c_S120_gcc.git
+[submodule "nrf51822"]
+	path = nrf51822
+	url = git@github.com:janekm/ble_app_hrs_c_S120_gcc.git
