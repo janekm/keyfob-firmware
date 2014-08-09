@@ -69,7 +69,7 @@
 #define ADV_INTERVAL_SLOW_LED_PIN_NO    31                                       /**< Is on when we are doing slow advertising. */
 #define ASSERT_LED_PIN_NO               31                                       /**< Is on when application has asserted. */
 
-#define DEVICE_NAME                     "Nordic_Mouse"                              /**< Name of device. Will be included in the advertising data. */
+#define DEVICE_NAME                     "Keyfob"                              /**< Name of device. Will be included in the advertising data. */
 #define MANUFACTURER_NAME               "NordicSemiconductor"                       /**< Manufacturer. Will be passed to Device Information Service. */
 
 #define APP_TIMER_PRESCALER             0                                           /**< Value of the RTC1 PRESCALER register. */

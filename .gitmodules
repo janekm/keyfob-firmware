@@ -3,4 +3,4 @@
 	url = https://github.com/hlnd/nrf51-pure-gcc-setup.git
 [submodule "nrf51822"]
 	path = nrf51822
-	url = https://janekm@bitbucket.org/janekm/nrf51_sdk.git
+	url = https://janekm@github.com/janekm/ble_app_hrs_c_S120_gcc.git
