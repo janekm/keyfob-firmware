@@ -1,3 +1,6 @@
 [submodule "nrf51-pure-gcc-setup"]
 	path = nrf51-pure-gcc-setup
 	url = https://github.com/hlnd/nrf51-pure-gcc-setup.git
+[submodule "ble_app_hrs_c_S120_gcc"]
+	path = ble_app_hrs_c_S120_gcc
+	url = git@github.com:janekm/ble_app_hrs_c_S120_gcc.git
