@@ -1,4 +1,4 @@
-SOFTDEVICE=../nrf51822/s110_nrf51822_6.0.0_softdevice.hex
+SOFTDEVICE=../s110_nrf51822_7.0.0_softdevice.hex
 
 # List all source files the application uses.
 APPLICATION_SRCS = $(notdir $(wildcard ../*.c))
@@ -9,7 +9,7 @@ APPLICATION_SRCS += app_scheduler.c
 APPLICATION_SRCS += ble_advdata.c
 APPLICATION_SRCS += ble_conn_params.c
 APPLICATION_SRCS += pstorage.c
-APPLICATION_SRCS += ble_bondmngr.c
+APPLICATION_SRCS += device_manager_peripheral.c
 APPLICATION_SRCS += ble_bas.c
 APPLICATION_SRCS += ble_dis.c
 APPLICATION_SRCS += ble_hids.c
